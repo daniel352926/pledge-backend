@@ -104,6 +104,7 @@ func (s *poolService) UpdatePoolInfo(contractAddress, network, chainId string) {
 			AutoLiquidateThreshold: baseInfo.AutoLiquidateThreshold.String(),
 		}
 
+		//将poolBase生成md5，再与Redis里存储的md5进行对比，如果md5相同则不更新，不同则保存/更新数据库和设置redis（如果redis里没有，也直接更新）
 		hasInfoData, byteBaseInfoStr, baseInfoMd5Str := s.GetPoolMd5(&poolBase, "base_info:pool_"+chainId+"_"+poolId)
 		if !hasInfoData || (baseInfoMd5Str != byteBaseInfoStr) { // have new data
 			//tokenInfo
@@ -111,6 +112,7 @@ func (s *poolService) UpdatePoolInfo(contractAddress, network, chainId string) {
 			if err != nil {
 				log.Logger.Sugar().Error("SavePoolBase err ", chainId, poolId)
 			}
+			// 缓存到Redis 30分钟
 			_ = db.RedisSet("base_info:pool_"+chainId+"_"+poolId, baseInfoMd5Str, 60*30) //The expiration time is set to prevent hsah collision
 		}
 

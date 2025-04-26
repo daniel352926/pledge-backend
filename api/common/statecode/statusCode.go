@@ -11,7 +11,8 @@ const (
 	CommonErrServerErr = 1000
 	ParameterEmptyErr  = 1001
 
-	TokenErr = 1102 //token error
+	TokenErr     = 1102 //token error
+	RequestLimit = 1103 //token error
 
 	// PNameEmpty muti-sign
 	PNameEmpty   = 1201 //p_name empty
@@ -48,6 +49,11 @@ var Msg = map[int]map[int]string{
 		LangZh:   "token错误",
 		LangZhTw: "token錯誤",
 		LangEn:   "token invalid",
+	},
+	1103: {
+		LangZh:   "请求限流",
+		LangZhTw: "请求限流",
+		LangEn:   "too many request per second",
 	},
 	1201: {
 		LangZh:   "sp_name 不能为空",

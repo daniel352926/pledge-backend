@@ -34,6 +34,11 @@ func (g *Gin) ResponsePages(c *gin.Context, code int, totalCount int, data inter
 	return
 }
 
+func (g *Gin) OK(c *gin.Context, data interface{}) {
+	// 调用 Response
+	g.Response(c, statecode.CommonSuccess, data)
+}
+
 // Response  响应统一格式
 func (g *Gin) Response(c *gin.Context, code int, data interface{}, httpStatus ...int) {
 	lang := statecode.LangEn

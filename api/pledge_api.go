@@ -3,6 +3,7 @@ package main
 import (
 	"pledge-backend/api/middlewares"
 	"pledge-backend/api/models"
+	"pledge-backend/api/models/eventLoop"
 	"pledge-backend/api/models/kucoin"
 	"pledge-backend/api/models/ws"
 	"pledge-backend/api/routes"
@@ -29,6 +30,8 @@ func main() {
 	// websocket server
 	go ws.StartServer()
 
+	go eventLoop.Dispatch()
+
 	// get plgr price from kucoin-exchange
 	go kucoin.GetExchangePrice()
 
@@ -37,6 +40,7 @@ func main() {
 	app := gin.Default()
 	staticPath := static.GetCurrentAbPathByCaller()
 	app.Static("/storage/", staticPath)
+	app.Use(middlewares.Limit())
 	app.Use(middlewares.Cors()) // 「 Cross domain Middleware 」
 	routes.InitRoute(app)
 	_ = app.Run(":" + config.Config.Env.Port)

@@ -13,6 +13,7 @@ type Conf struct {
 	Threshold    ThresholdConfig
 	Jwt          JwtConfig
 	Env          EnvConfig
+	Eth          Eth
 }
 
 type EnvConfig struct {
@@ -89,4 +90,9 @@ type RedisConfig struct {
 	MaxIdle     int    `toml:"max_idle"`
 	MaxActive   int    `toml:"max_active"`
 	IdleTimeout int    `toml:"idle_timeout"`
+}
+
+type Eth struct {
+	RawUrl string `toml:"raw_url"`
+	WssUrl string `toml:"wss_url"`
 }
