@@ -11,6 +11,8 @@ type Tx struct {
 	Id                   int    `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	Hash                 string `json:"hash" gorm:"column:tx_hash;type:char(66);not null"`
 	Type                 uint8  `json:"type" gorm:"column:tx_type;type:tinyint"`
+	BlockNum             uint64 `json:"blockNum" gorm:"column:block_num;type:bigint;not null"`
+	Index                uint   `json:"index" gorm:"column:t_index;type:bigint;not null"`
 	Nonce                uint64 `json:"nonce" gorm:"column:nonce;type:bigint"`
 	GasPrice             string `json:"gasPrice" gorm:"column:gas_price;type:varchar(66);null"`
 	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas" gorm:"column:max_priority_fee_per_gas;type:varchar(66)"`
@@ -31,18 +33,16 @@ func NewTx() *Tx {
 }
 
 func (t Tx) Save(tx *Tx) error {
-	exists := Tx{}
-
-	err := db.Mysql.Table("transaction").Where("tx_hash=?", tx.Hash).First(&exists).Debug().Error
+	exists, err := t.GetByHash(tx.Hash)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = db.Mysql.Table("transaction").Create(tx).Debug().Error
-			if err != nil {
-				log.Logger.Error(err.Error())
-				return err
-			}
-		} else {
-			return errors.New("transaction record select err " + err.Error())
+		return errors.New("transaction record select err " + err.Error())
+	}
+
+	if exists == nil {
+		err = db.Mysql.Table("transaction").Create(tx).Debug().Error
+		if err != nil {
+			log.Logger.Error(err.Error())
+			return err
 		}
 	}
 
@@ -62,7 +62,7 @@ func (t Tx) GetByHash(hash string) (*Tx, error) {
 	return &res, nil
 }
 
-func (t Tx) GetByHashes(hashes []string) ([]Tx, error) {
+func (t Tx) GetByHashes(hashes []string) (*[]Tx, error) {
 	var res []Tx
 	err := db.Mysql.Table("transaction").Where("tx_hash in ?", hashes).Find(&res).Debug().Error
 	if err != nil {
@@ -72,5 +72,18 @@ func (t Tx) GetByHashes(hashes []string) ([]Tx, error) {
 		log.Logger.Error(err.Error())
 		return nil, err
 	}
-	return res, nil
+	return &res, nil
+}
+
+func (t Tx) GetByNumber(blockNumber uint64) (*[]Tx, error) {
+	var res []Tx
+	err := db.Mysql.Table("transaction").Where("block_num = ?", blockNumber).Find(&res).Debug().Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		log.Logger.Error(err.Error())
+		return nil, err
+	}
+	return &res, nil
 }

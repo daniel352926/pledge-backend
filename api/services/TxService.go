@@ -19,6 +19,10 @@ func (s *TxService) GetByHash(hash string) (*models.Tx, error) {
 	return models.NewTx().GetByHash(hash)
 }
 
-func (s *TxService) GetByHashes(hashes []string) ([]models.Tx, error) {
+func (s *TxService) GetByHashes(hashes []string) (*[]models.Tx, error) {
 	return models.NewTx().GetByHashes(hashes)
+}
+
+func (s *TxService) GetByBlockNum(blockNum uint64) (*[]models.Tx, error) {
+	return models.NewTx().GetByNumber(blockNum)
 }

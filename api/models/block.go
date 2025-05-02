@@ -10,10 +10,10 @@ import (
 
 type Block struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement;not null"`
-	Number           string `gorm:"type:varchar(255);not null"`
+	Number           uint64 `gorm:"type:bigint;not null"`
 	Hash             string `gorm:"type:varchar(255);not null"`
 	ParentHash       string `gorm:"type:varchar(255);not null"`
-	Nonce            string `gorm:"type:varchar(255);not null"`
+	Nonce            uint64 `gorm:"type:bigint;not null"`
 	Sha3Uncles       string `gorm:"type:varchar(255);not null"`
 	LogsBloom        string `gorm:"type:text;not null"`
 	TransactionsRoot string `gorm:"type:varchar(255);not null"`
@@ -21,13 +21,12 @@ type Block struct {
 	ReceiptsRoot     string `gorm:"type:varchar(255);not null"`
 	Miner            string `gorm:"type:varchar(255);not null"`
 	Difficulty       string `gorm:"type:varchar(255);not null"`
-	TotalDifficulty  string `gorm:"type:varchar(255);not null"`
 	ExtraData        string `gorm:"type:text;not null"`
 	Size             string `gorm:"type:varchar(255);not null"`
 	GasLimit         string `gorm:"type:varchar(255);not null"`
 	GasUsed          string `gorm:"type:varchar(255);not null"`
-	Timestamp        string `gorm:"type:varchar(255);not null"`
-	Transactions     string `gorm:"type:json;not null"` // 需要 import "gorm.io/datatypes"
+	Timestamp        uint64 `gorm:"type:int;not null"`
+	Transactions     string `gorm:"type:json;not null"`
 	Uncles           string `gorm:"type:json;not null"`
 	CreatedAt        time.Time
 }
@@ -37,28 +36,26 @@ func NewBlock() *Block {
 }
 
 func (r *Block) Save(block *Block) error {
-	exists := Tx{}
-
-	err := db.Mysql.Table("block").Where("hash=?", block.Hash).First(&exists).Debug().Error
+	exists, err := r.GetByNum(block.Number)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = db.Mysql.Table("block").Create(block).Debug().Error
-			if err != nil {
-				log.Logger.Error(err.Error())
-				return err
-			}
-		} else {
-			return errors.New("block record select err " + err.Error())
+		return errors.New("block record select err " + err.Error())
+	}
+
+	if exists == nil {
+		err = db.Mysql.Table("block").Create(block).Debug().Error
+		if err != nil {
+			log.Logger.Error(err.Error())
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (r *Block) GetByNum(txHash string) (*Block, error) {
-	receipt := Block{}
+func (r *Block) GetByNum(blockNumber uint64) (*Block, error) {
+	block := Block{}
 
-	err := db.Mysql.Table("block").Where("number=?", txHash).First(&receipt).Debug().Error
+	err := db.Mysql.Table("block").Where("number=?", blockNumber).First(&block).Debug().Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -67,5 +64,5 @@ func (r *Block) GetByNum(txHash string) (*Block, error) {
 		return nil, err
 	}
 
-	return &receipt, nil
+	return &block, nil
 }

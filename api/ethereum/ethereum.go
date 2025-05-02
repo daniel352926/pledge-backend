@@ -7,31 +7,15 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"math/big"
+	"pledge-backend/api/models"
 	"pledge-backend/config"
 	"pledge-backend/log"
 )
 
 type Block struct {
-	Number           string        `json:"number"`
-	Hash             string        `json:"hash"`
-	ParentHash       string        `json:"parentHash"`
-	Nonce            string        `json:"nonce"`
-	Sha3Uncles       string        `json:"sha3Uncles"`
-	LogsBloom        string        `json:"logsBloom"`
-	TransactionsRoot string        `json:"transactionsRoot"`
-	StateRoot        string        `json:"stateRoot"`
-	ReceiptsRoot     string        `json:"receiptsRoot"`
-	Miner            string        `json:"miner"`
-	Difficulty       string        `json:"difficulty"`
-	TotalDifficulty  string        `json:"totalDifficulty"`
-	ExtraData        string        `json:"extraData"`
-	Size             string        `json:"size"`
-	GasLimit         string        `json:"gasLimit"`
-	GasUsed          string        `json:"gasUsed"`
-	Timestamp        string        `json:"timestamp"`
-	Transactions     []string      `json:"transactions"`
-	TxList           []interface{} `json:"txList"`
-	Uncles           []string      `json:"uncles"`
+	Block  models.Block
+	TxList []models.Tx `json:"txList"`
 }
 
 func GetClient() *ethclient.Client {
@@ -66,6 +50,21 @@ func GetBlockByRpcCall(arg string) (*map[string]interface{}, error) {
 	err = client.CallContext(context.Background(), &blockMap, "eth_getBlockByNumber", arg, false)
 
 	return &blockMap, err
+}
+
+func GetBlockByNum(num *int64) (*types.Block, error) {
+	client, err := ethclient.Dial(config.Config.Eth.RawUrl)
+	if err != nil {
+		log.Logger.Fatal("获取Eth客户端失败")
+		return nil, err
+	}
+
+	block, err := client.BlockByNumber(context.Background(), big.NewInt(*num))
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
 }
 
 // GetTxByHash 根据hash获取交易信息

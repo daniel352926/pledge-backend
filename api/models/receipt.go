@@ -11,10 +11,10 @@ import (
 type Receipt struct {
 	Id                int64     `json:"-" gorm:"column:id;primaryKey;autoIncrement"`
 	Hash              string    `json:"transactionHash" gorm:"column:tx_hash;type:char(66);not null"`
-	Type              string    `json:"type" gorm:"column:tx_type;type:varchar(10)"`
-	Status            string    `json:"status" gorm:"column:status;type:varchar(10)"`
+	Type              uint8     `json:"type" gorm:"column:tx_type;type:int"`
+	Status            uint64    `json:"status" gorm:"column:status;type:bigint"`
 	Root              string    `json:"root" gorm:"column:root;type:varchar(66)"`
-	CumulativeGasUsed string    `json:"cumulativeGasUsed" gorm:"column:cumulative_gas_used;type:varchar(66)"`
+	CumulativeGasUsed uint64    `json:"cumulativeGasUsed" gorm:"column:cumulative_gas_used;type:bigint"`
 	LogsBloom         string    `json:"logsBloom" gorm:"column:logs_bloom;type:text"`
 	ContractAddress   string    `json:"contractAddress" gorm:"column:contract_address;type:char(42)"`
 	GasUsed           string    `json:"gasUsed" gorm:"column:gas_used;type:varchar(66)"`
@@ -30,18 +30,16 @@ func NewReceipt() *Receipt {
 }
 
 func (r *Receipt) Save(receipt *Receipt) error {
-	exists := Tx{}
-
-	err := db.Mysql.Table("receipt").Where("tx_hash=?", receipt.Hash).First(&exists).Debug().Error
+	exists, err := r.GetByHash(receipt.Hash)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = db.Mysql.Table("receipt").Create(receipt).Debug().Error
-			if err != nil {
-				log.Logger.Error(err.Error())
-				return err
-			}
-		} else {
-			return errors.New("receipt record select err " + err.Error())
+		return errors.New("receipt record select err " + err.Error())
+	}
+
+	if exists == nil {
+		err = db.Mysql.Table("receipt").Create(receipt).Debug().Error
+		if err != nil {
+			log.Logger.Error(err.Error())
+			return err
 		}
 	}
 
